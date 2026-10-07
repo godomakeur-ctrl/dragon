@@ -170,12 +170,19 @@ select:focus{outline:none;border-color:var(--gold)}
 <div class="section-body">
 <div class="section-content">
 <div class="control-row">
-<label class="control-label">Durée</label>
-<select id="duration-select">
+<label class="control-label">Durée (en secondes)</label>
+<select id="duration-select" style="margin-bottom:.5rem">
 <option value="121">5 secondes</option>
-<option value="153" selected>6,4 secondes (recommandé)</option>
+<option value="153">6,4 secondes</option>
 <option value="241">10 secondes</option>
+<option value="361">15 secondes</option>
+<option value="441">18 secondes (maximum)</option>
 </select>
+<div style="display:flex;gap:.5rem;align-items:center">
+<input type="number" id="duration-custom" min="1" max="18" step="1" placeholder="Ou tape 1-18 sec" style="flex:1;padding:.7rem .9rem;border-radius:8px;border:1px solid var(--border);background:#0a0a15;color:var(--ink);font-family:inherit;font-size:.88rem">
+<button type="button" id="duration-apply" style="padding:.7rem 1rem;border-radius:8px;border:none;background:linear-gradient(135deg,var(--fire),var(--gold));color:#0a0a12;font-weight:700;font-family:inherit;cursor:pointer">OK</button>
+</div>
+<p style="font-size:.68rem;color:var(--dim);margin-top:.4rem">Entre 1 et 18 secondes. Le champ personnalisé écrase le menu.</p>
 </div>
 <div class="control-row">
 <label class="control-label">Cadrage</label>
@@ -496,7 +503,35 @@ function stopGeneration(){if(!state.isRunning)return;state.stopRequested=true;se
   const uz=document.getElementById('upload-zone'),fi=document.getElementById('file-input');
   if(uz&&fi){uz.addEventListener('click',()=>fi.click());fi.addEventListener('change',e=>{handleFiles(e.target.files);fi.value=''})}
   const mp=document.getElementById('main-prompt');if(mp)mp.addEventListener('input',e=>{state.mainPrompt=e.target.value});
-  const ds=document.getElementById('duration-select');if(ds)ds.addEventListener('change',e=>{state.durationFrames=parseInt(e.target.value,10)});
+  // Durée : menu déroulant
+const ds=document.getElementById('duration-select');
+if(ds)ds.addEventListener('change',e=>{
+  state.durationFrames=parseInt(e.target.value,10);
+  const ci=document.getElementById('duration-custom');
+  if(ci)ci.value='';
+});
+// Durée : champ personnalisé
+const dc=document.getElementById('duration-custom');
+const da=document.getElementById('duration-apply');
+function applyCustomDuration(){
+  const ci=document.getElementById('duration-custom');
+  if(!ci)return;
+  let sec=parseFloat(ci.value);
+  if(isNaN(sec)||sec<1){alert('Entre une durée entre 1 et 18 secondes');return}
+  if(sec>18){sec=18;ci.value=18}
+  // Convertir en num_frames (doit être 8n+1 et ≤ 441)
+  // frames = sec * 24 fps
+  let frames=Math.round(sec*24);
+  // Ajuster au 8n+1 le plus proche
+  frames=Math.round((frames-1)/8)*8+1;
+  if(frames<9)frames=9;
+  if(frames>441)frames=441;
+  state.durationFrames=frames;
+  const realSec=(frames/24).toFixed(1);
+  showToast('Durée : '+realSec+' s ('+frames+' frames)','success',2500);
+}
+if(da)da.addEventListener('click',applyCustomDuration);
+if(dc)dc.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCustomDuration()}});
   const fs=document.getElementById('framing-select');if(fs)fs.addEventListener('change',e=>{state.framing=e.target.value});
   const is=document.getElementById('intensity-select');if(is)is.addEventListener('change',e=>{state.intensity=e.target.value});
   const gb=document.getElementById('generate-btn');if(gb)gb.addEventListener('click',startGeneration);
