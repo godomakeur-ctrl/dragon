@@ -232,7 +232,6 @@ const CREATE_INTERVAL_MIN=62000,CREATE_INTERVAL_MAX=90000,CREATE_INTERVAL_SAFE=7
 const POLL_INTERVAL_SEC=8,MAX_POLL_ATTEMPTS=100;
 const API_KEY_STORAGE='dragon_api_key_v2';
 
-// Clé API avec localStorage (fallback mémoire si indisponible)
 let API_KEY_MEMORY='';
 function getApiKey(){try{const k=localStorage.getItem(API_KEY_STORAGE);if(k)return k.trim()}catch(e){}return API_KEY_MEMORY.trim()}
 function saveApiKey(){
@@ -241,7 +240,7 @@ function saveApiKey(){
   const k=i.value.trim();
   if(!k){alert('Tape d\'abord ta clé API');return}
   API_KEY_MEMORY=k;
-  try{localStorage.setItem(API_KEY_STORAGE,k)}catch(e){console.warn('localStorage indispo')}
+  try{localStorage.setItem(API_KEY_STORAGE,k)}catch(e){}
   updateApiPanel();
   showToast('Clé API enregistrée ✓','success',3000);
 }
@@ -274,7 +273,6 @@ function updateGenerateBtn(){
   else b.textContent='🐉 Créer '+state.images.length+' vidéo'+(state.images.length>1?'s':'');
 }
 
-// ═══════════ TOAST ═══════════
 let toastTimeout=null;
 function showToast(msg,type='success',dur=2500){
   const t=document.getElementById('toast'),i=document.getElementById('toast-icon'),x=document.getElementById('toast-text');
@@ -287,49 +285,45 @@ function showToast(msg,type='success',dur=2500){
   toastTimeout=setTimeout(()=>t.classList.remove('visible'),dur);
 }
 
-// ═══════════ TIMING ═══════════
 let timingCache={};
 function recordGenerationTime(n,d){const k=String(n);if(!timingCache[k])timingCache[k]=[];timingCache[k].push(d);updateTimingDisplay()}
 function estimateGenerationTime(n){const s=timingCache[String(n)];if(s&&s.length){const sorted=[...s].sort((a,b)=>a-b),m=Math.floor(sorted.length/2);return sorted.length%2===0?(sorted[m-1]+sorted[m])/2:sorted[m]}return 30000+n*500}
 function updateTimingDisplay(){const all=Object.values(timingCache).flat(),s=document.getElementById('stat-speed'),n=document.getElementById('stat-samples');if(!s)return;if(!all.length){s.textContent='en attente';n.textContent='0 génération';return}const avg=all.reduce((a,b)=>a+b,0)/all.length;s.textContent=(avg/1000).toFixed(1)+'s en moyenne';n.textContent=all.length+' génération'+(all.length>1?'s':'')}
 
-// ═══════════ PRESETS ═══════════
 const PROMPT_PRESETS=[
-{label:'😌 Réveil doux',text:'A silent animation. No dialogue, no speaking, no voices. Eyes slowly open, then close, then open again. Gentle yawn. Head moves slightly. No text on screen.'},
-{label:'😲 Surprise',text:'A silent animation. No dialogue, no speaking, no voices. Eyes blink naturally. Eyebrows raise slightly. Mouths open in surprise. No text on screen.'},
-{label:'💨 Vent léger',text:'A silent animation. No dialogue, no speaking, no voices. Hair moves gently in a soft breeze. Clothes flutter slightly. Eyes blink naturally. No text on screen.'},
-{label:'👣 Marche',text:'A silent animation. No dialogue, no speaking, no voices. Legs move slowly, arms swing naturally. Slight head bobbing. Camera follows. No text on screen.'},
-{label:'🏃 Course',text:'A silent animation. No dialogue, no speaking, no voices. Legs move fast, arms swing quickly. Hair blown backward. Slight motion blur. No text on screen.'},
-{label:'🎥 Zoom caméra',text:'A silent animation. No dialogue, no speaking, no voices. Camera slowly moves forward toward the subject. Light shifts subtly. No text on screen.'},
-{label:'✨ Particules',text:'A silent animation. No dialogue, no speaking, no voices. Golden dust particles float in the air. Light sparkles gently. Characters blink slowly. No text on screen.'},
-{label:'🌙 Nocturne',text:'A silent animation. No dialogue, no speaking, no voices. Cool moonlight atmosphere. Eyes blink slowly. Chest rises and falls with breath. No text on screen.'},
-{label:'🌅 Golden hour',text:'A silent animation. No dialogue, no speaking, no voices. Warm golden sunlight shifts gently. Dust particles float. Characters blink slowly. No text on screen.'},
-{label:'😱 Peur',text:'A silent animation. No dialogue, no speaking, no voices. Eyes wide open, pupils small. Body trembles slightly. Head moves left and right nervously. No text on screen.'}
+{label:'😌 Réveil doux',text:'A silent animation. No dialogue, no voices, no text on screen. Eyes slowly open, then blink. Gentle head movement. Do not look at the camera. They look at each other.'},
+{label:'😲 Surprise',text:'A silent animation. No dialogue, no voices, no text on screen. Eyes wide open. Mouth slightly open in surprise. Do not look at the camera. They look at each other.'},
+{label:'💨 Vent léger',text:'A silent animation. No dialogue, no voices, no text on screen. Hair moves gently in a soft breeze. Do not look at the camera. They look at the scenery.'},
+{label:'👣 Marche',text:'A silent animation. No dialogue, no voices, no text on screen. Legs move slowly, arms swing naturally. Do not look at the camera. They look forward.'},
+{label:'🏃 Course',text:'A silent animation. No dialogue, no voices, no text on screen. Legs move fast. Arms swing. Hair blown back by wind. Do not look at the camera. They look forward.'},
+{label:'🎥 Zoom caméra',text:'A silent animation. No dialogue, no voices, no text on screen. Camera slowly moves forward toward the subject. Do not look at the camera. They look at each other.'},
+{label:'✨ Particules',text:'A silent animation. No dialogue, no voices, no text on screen. Golden dust particles float in the air. Light sparkles gently. Do not look at the camera. They look at the scenery.'},
+{label:'😱 Peur',text:'A silent animation. No dialogue, no voices, no text on screen. Eyes wide open. Body trembles slightly. Do not look at the camera. They look at the threat.'},
+{label:'😊 Joie',text:'A silent animation. No dialogue, no voices, no text on screen. Characters smile. Slight bouncing movement. Do not look at the camera. They look at each other.'},
+{label:'🕊️ Soulagement',text:'A silent animation. No dialogue, no voices, no text on screen. Chest rises and falls with deep breath. Shoulders relax. Do not look at the camera. They look at each other.'}
 ];
 
-// ═══════════ EFFETS ═══════════
 const MYTH_EFFECTS=[
-{id:'dragon-fire',name:'Dragon de Feu',emoji:'🐉',desc:'Braises, fumée, or',prompt:'majestic fire dragon breathing embers into frame, glowing scales, floating cinders, warm golden light, epic fantasy atmosphere. Preserve the exact subject identity.'},
-{id:'dragon-ice',name:'Dragon de Glace',emoji:'❄️',desc:'Cristaux, bleu glacé',prompt:'ice dragon presence, floating ice crystals, frost particles, cool blue light, frozen mystical atmosphere. Preserve the exact subject identity.'},
-{id:'dragon-shadow',name:'Dragon d\'Ombre',emoji:'🌑',desc:'Noir, brume, mystère',prompt:'shadow dragon presence, dark mist, purple and black smoke, glowing eyes in darkness. Preserve the exact subject identity.'},
-{id:'magic-runes',name:'Runes Magiques',emoji:'✨',desc:'Symboles dorés',prompt:'glowing magical runes floating in the air, golden particles, arcane symbols, mystical ambience. Preserve the exact subject identity.'},
-{id:'phoenix',name:'Phénix',emoji:'🔥',desc:'Renaissance, flammes',prompt:'phoenix rising, golden flames, feathers of fire swirling, warm glow, rebirth atmosphere. Preserve the exact subject identity.'},
-{id:'unicorn',name:'Licorne',emoji:'🦄',desc:'Forêt magique',prompt:'magical unicorn aura, pastel rainbow glow, enchanted forest, sparkles. Preserve the exact subject identity.'},
-{id:'mermaid',name:'Sirène',emoji:'🧜',desc:'Océan, bulles',prompt:'underwater mermaid atmosphere, caustic light through water, floating bubbles, turquoise tones. Preserve the exact subject identity.'},
-{id:'werewolf',name:'Loup-Garou',emoji:'🐺',desc:'Pleine lune, brume',prompt:'full moon night, misty forest, werewolf atmosphere, dramatic moonlight, eerie fog. Preserve the exact subject identity.'},
-{id:'vampire',name:'Vampire',emoji:'🧛',desc:'Château, nuit',prompt:'gothic vampire atmosphere, ancient castle, night mist, deep red accents, candlelight. Preserve the exact subject identity.'},
-{id:'angel',name:'Ange',emoji:'😇',desc:'Ailes, halo',prompt:'angelic presence, soft divine light, glowing halo, white feathers floating. Preserve the exact subject identity.'},
-{id:'demon',name:'Démon',emoji:'😈',desc:'Cornes, feu',prompt:'demonic presence, hellish red glow, floating embers, smoke, dramatic contrast. Preserve the exact subject identity.'},
-{id:'fairy',name:'Fée',emoji:'🧚',desc:'Lucioles, magie',prompt:'fairy magic, glowing fireflies, sparkling stardust, soft pastel light, enchanted glade. Preserve the exact subject identity.'}
+{id:'dragon-fire',name:'Dragon de Feu',emoji:'🐉',desc:'Braises, fumée, or',prompt:'majestic fire dragon breathing embers into frame, glowing scales, floating cinders, warm golden light, epic fantasy atmosphere.'},
+{id:'dragon-ice',name:'Dragon de Glace',emoji:'❄️',desc:'Cristaux, bleu glacé',prompt:'ice dragon presence, floating ice crystals, frost particles, cool blue light, frozen mystical atmosphere.'},
+{id:'dragon-shadow',name:'Dragon d\'Ombre',emoji:'🌑',desc:'Noir, brume, mystère',prompt:'shadow dragon presence, dark mist, purple and black smoke, glowing eyes in darkness.'},
+{id:'magic-runes',name:'Runes Magiques',emoji:'✨',desc:'Symboles dorés',prompt:'glowing magical runes floating in the air, golden particles, arcane symbols, mystical ambience.'},
+{id:'phoenix',name:'Phénix',emoji:'🔥',desc:'Renaissance, flammes',prompt:'phoenix rising, golden flames, feathers of fire swirling, warm glow, rebirth atmosphere.'},
+{id:'unicorn',name:'Licorne',emoji:'🦄',desc:'Forêt magique',prompt:'magical unicorn aura, pastel rainbow glow, enchanted forest, sparkles.'},
+{id:'mermaid',name:'Sirène',emoji:'🧜',desc:'Océan, bulles',prompt:'underwater mermaid atmosphere, caustic light through water, floating bubbles, turquoise tones.'},
+{id:'werewolf',name:'Loup-Garou',emoji:'🐺',desc:'Pleine lune, brume',prompt:'full moon night, misty forest, werewolf atmosphere, dramatic moonlight, eerie fog.'},
+{id:'vampire',name:'Vampire',emoji:'🧛',desc:'Château, nuit',prompt:'gothic vampire atmosphere, ancient castle, night mist, deep red accents, candlelight.'},
+{id:'angel',name:'Ange',emoji:'😇',desc:'Ailes, halo',prompt:'angelic presence, soft divine light, glowing halo, white feathers floating.'},
+{id:'demon',name:'Démon',emoji:'😈',desc:'Cornes, feu',prompt:'demonic presence, hellish red glow, floating embers, smoke, dramatic contrast.'},
+{id:'fairy',name:'Fée',emoji:'🧚',desc:'Lucioles, magie',prompt:'fairy magic, glowing fireflies, sparkling stardust, soft pastel light, enchanted glade.'}
 ];
 
-// ═══════════ MOUVEMENTS ═══════════
 const RANDOM_ACTIONS=[
-'the subject slowly raises a hand toward the camera',
+'the subject slowly raises a hand',
 'the subject turns their head slowly',
 'the subject\'s hair moves gently in an imperceptible breeze',
 'the subject stands still, only their chest rising and falling with breath',
-'the subject\'s eyes open slowly, revealing an intense gaze',
+'the subject blinks slowly',
 'the subject lifts their chin slightly'
 ];
 const RANDOM_CAMERA=[
@@ -357,10 +351,8 @@ medium:'medium shot, subject framed from waist up',
 wide:'wide shot, subject framed with the environment visible'
 };
 
-// ═══════════ STATE ═══════════
 const state={images:[],isRunning:false,stopRequested:false,queue:[],completed:0,failed:0,selectedEffect:null,mainPrompt:'',framing:'random',intensity:'moderate',durationFrames:153,isLoadingImages:false,videos:[]};
 
-// ═══════════ UTILS ═══════════
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 function log(m){console.log('[Dragon] '+m)}
 function setStatus(t){const b=document.getElementById('status-bar'),x=document.getElementById('status-text');if(!b)return;if(t){b.classList.add('visible');x.textContent=t}else b.classList.remove('visible')}
@@ -368,7 +360,6 @@ function randomItem(a){return a[Math.floor(Math.random()*a.length)]}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])}
 function formatEta(s){if(s<60)return Math.round(s)+'s';const m=Math.floor(s/60),r=Math.round(s%60);return m+'m'+(r>0?' '+r+'s':'')}
 
-// ═══════════ IMAGES ═══════════
 function fileToDataUri(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=()=>rej(new Error('Erreur'));r.readAsDataURL(f)})}
 function generateThumbnail(du){return new Promise(res=>{const i=new Image();i.onload=()=>{try{const c=document.createElement('canvas'),ra=i.height/i.width;c.width=200;c.height=Math.round(200*ra);c.getContext('2d').drawImage(i,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.7))}catch(e){res(du)}};i.onerror=()=>res(du);i.src=du})}
 async function processOneFile(f){if(!f.type.startsWith('image/'))return null;if(f.size>12*1024*1024)return null;try{const du=await fileToDataUri(f),th=await generateThumbnail(du);return{file:f,dataUri:du,thumbnail:th,id:Date.now()+Math.random()}}catch(e){return null}}
@@ -376,22 +367,17 @@ async function handleFiles(files){const arr=Array.from(files).filter(f=>f.type.s
 function removeImage(id){state.images=state.images.filter(i=>i.id!==id);renderImages();updateGenerateBtn()}
 function renderImages(){const g=document.getElementById('images-grid');g.innerHTML=state.images.map(i=>'<div class="image-card"><img src="'+(i.thumbnail||i.dataUri)+'" alt=""><button class="remove-btn" data-remove="'+i.id+'">✕</button></div>').join('');g.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();removeImage(parseFloat(b.dataset.remove))}))}
 
-// ═══════════ RENDER ═══════════
 function renderPromptPresets(){const c=document.getElementById('prompt-presets');c.innerHTML=PROMPT_PRESETS.map((p,i)=>'<div class="prompt-preset" data-preset="'+i+'">'+esc(p.label)+'</div>').join('');c.querySelectorAll('.prompt-preset').forEach(el=>el.addEventListener('click',()=>{const p=PROMPT_PRESETS[parseInt(el.dataset.preset,10)];if(!p)return;const ta=document.getElementById('main-prompt');ta.value=p.text;state.mainPrompt=p.text;showToast('Exemple appliqué','success',1200)}))}
 function renderStyles(){const c=document.getElementById('styles-grid');let h='';h+='<div class="no-style-card '+(state.selectedEffect===null?'selected':'')+'" data-effect="none">'+(state.selectedEffect===null?'✓ Aucun effet':'🚫 Aucun effet')+'</div>';h+='<div class="style-cat-header">🐲 Créatures & Magie</div>';h+=MYTH_EFFECTS.map(s=>'<div class="style-card '+(state.selectedEffect===s.id?'selected':'')+'" data-effect="'+s.id+'"><div class="style-emoji">'+s.emoji+'</div><div><div class="style-name">'+esc(s.name)+'</div><div class="style-desc">'+esc(s.desc)+'</div></div></div>').join('');c.innerHTML=h;c.querySelectorAll('[data-effect]').forEach(el=>el.addEventListener('click',()=>{const v=el.dataset.effect;state.selectedEffect=(v==='none')?null:v;renderStyles()}))}
 
-// ═══════════ BUILD PROMPT ═══════════
 function buildPrompt(){const effect=state.selectedEffect?MYTH_EFFECTS.find(s=>s.id===state.selectedEffect):null;const hasUser=state.mainPrompt&&state.mainPrompt.trim().length>0;const parts=[];parts.push('Animate this exact image as the starting frame. Preserve the exact composition, framing, and layout. Only subtle motion, breathing, light, and atmosphere are animated. No dialogue, no speaking, no voices, no text on screen.');if(effect)parts.push(effect.prompt);if(hasUser)parts.push(state.mainPrompt.trim());if(state.framing!=='random'&&FRAMING_PRESETS[state.framing])parts.push(FRAMING_PRESETS[state.framing]);if(state.intensity!=='random'&&INTENSITY_PRESETS[state.intensity])parts.push(INTENSITY_PRESETS[state.intensity]);else parts.push(INTENSITY_PRESETS.moderate);parts.push(randomItem(RANDOM_ACTIONS));parts.push(randomItem(RANDOM_CAMERA));parts.push(randomItem(RANDOM_LIGHTING));parts.push('Portrait 9:16, 24fps, no watermarks');return parts.join('. ')}
 
-// ═══════════ API ═══════════
 async function apiFetch(url,opt,label){for(let a=0;a<7;a++){if(state.stopRequested)throw new Error('Arrêt demandé');try{const r=await fetch(url,opt);if(r.status===429){if(createIntervalMs<CREATE_INTERVAL_SAFE)createIntervalMs=Math.min(createIntervalMs+8000,CREATE_INTERVAL_MAX);const w=[15,30,45,60,90,120,180][Math.min(a,6)];setStatus('IA en préparation… ('+w+'s)');await sleep(w*1000);continue}if(r.status===503){const w=[5,10,15,20,30,45][Math.min(a,5)];setStatus('Préparation… ('+w+'s)');await sleep(w*1000);continue}return r}catch(e){if(e.message==='Arrêt demandé')throw e;const w=[3,5,8,12,20,30][Math.min(a,5)];setStatus('Connexion… ('+w+'s)');await sleep(w*1000)}}return fetch(url,opt)}
 async function createVideoTask(dataUri,prompt){const body={model:MODEL_VIDEO,prompt:prompt,image:dataUri,num_frames:state.durationFrames,frame_rate:FRAME_RATE};const r=await apiFetch(API_BASE+'/videos',{method:'POST',headers:{'Authorization':'Bearer '+getApiKey(),'Content-Type':'application/json'},body:JSON.stringify(body)},'Création');if(!r.ok){const e=await r.text();throw new Error('HTTP '+r.status+' — '+e.slice(0,200))}const d=await r.json();const vid=d.video_id||d.id||d.task_id;if(!vid)throw new Error('Pas de video_id');return vid}
 async function pollVideo(vid,onProg){const est=estimateGenerationTime(state.durationFrames),estS=est/1000;let rem=Math.max(20,Math.floor(estS*.8));while(rem>0){if(state.stopRequested)throw new Error('Arrêt demandé');onProg('Préparation… '+rem+'s');await sleep(1000);rem--}for(let a=0;a<MAX_POLL_ATTEMPTS;a++){if(state.stopRequested)throw new Error('Arrêt demandé');if(a>0){let rr=POLL_INTERVAL_SEC;while(rr>0){if(state.stopRequested)throw new Error('Arrêt demandé');onProg('L\'image prend vie… '+rr+'s');await sleep(1000);rr--}}const url=POLL_BASE+'?video_id='+encodeURIComponent(vid)+'&model_name='+encodeURIComponent(MODEL_VIDEO);const r=await apiFetch(url,{method:'GET',headers:{'Authorization':'Bearer '+getApiKey()}},'Polling');const d=await r.json();const st=d.status||'unknown',p=d.progress||0;onProg('Création… '+p+'%');if(st==='completed'||st==='succeeded'||st==='done'){const u=(d.metadata&&d.metadata.url)||d.url||(d.output&&d.output.url);if(!u)throw new Error('Pas d\'URL');return u}if(st==='failed'||st==='error'||st==='cancelled')throw new Error('Échec')}throw new Error('Délai dépassé')}
 
-// ═══════════ QUEUE ═══════════
 function renderQueue(){const q=document.getElementById('queue');if(!state.queue.length){q.style.display='none';return}q.style.display='block';const total=state.queue.length,done=state.completed+state.failed,inProg=state.queue.filter(x=>x.status==='processing').length,pending=total-done-inProg;const est=estimateGenerationTime(state.durationFrames)/1000;const eta=pending>0?(pending*(createIntervalMs/1000))+est:(inProg*est/Math.max(inProg,1));let h='<div class="queue-summary"><span class="progress-text">Progression : '+done+'/'+total+'</span><span class="eta-text">'+(done<total?'≈ '+formatEta(eta)+' restant':'Terminé')+'</span></div>';h+=state.queue.slice(0,30).map(it=>{let ic='○',s='En attente',c='pending';if(it.status==='creating'){ic='◐';s='Préparation…';c='creating'}else if(it.status==='processing'){ic='◐';s=it.progress||'En cours…';c='processing'}else if(it.status==='done'){ic='●';s='Terminé';c='done'}else if(it.status==='failed'){ic='✕';s='Échec';c='failed'}return'<div class="queue-item '+c+'"><div class="q-icon">'+ic+'</div><div class="q-name">Image '+(it.imageIndex+1)+'</div><div class="q-status">'+esc(s)+'</div></div>'}).join('');q.innerHTML=h}
 
-// ═══════════ GALLERY ═══════════
 function addToGallery(url,label){
   state.videos.push({url:url,label:label,id:Date.now()+Math.random()});
   renderGallery();
@@ -419,17 +405,11 @@ function renderGallery(){
 function downloadVideo(id){
   const v=state.videos.find(x=>x.id===id);
   if(!v){showToast('Vidéo introuvable','error');return}
-  
-  // Détecter iPhone/iPad
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  
   if(isIOS){
-    // Sur iPhone : ouvrir la vidéo dans un nouvel onglet
-    // Puis l'utilisateur fait un appui long → "Enregistrer la vidéo"
     showToast('Appui long sur la vidéo → Enregistrer', 'success', 4000);
     window.open(v.url, '_blank');
   } else {
-    // Sur PC : téléchargement direct
     showToast('Téléchargement…','success',2000);
     const a=document.createElement('a');
     a.href=v.url;
@@ -440,14 +420,12 @@ function downloadVideo(id){
     a.click();
     document.body.removeChild(a);
   }
-  }
 }
 function downloadAll(){
   if(!state.videos.length){showToast('Aucune vidéo','warn');return}
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   if(isIOS){
     showToast('Ouvre chaque vidéo et fais un appui long pour enregistrer', 'success', 4000);
-    // Ouvre la première dans un nouvel onglet
     window.open(state.videos[0].url, '_blank');
   } else {
     showToast('Téléchargement de '+state.videos.length+' vidéos…','success',3000);
@@ -465,11 +443,10 @@ function downloadAll(){
     });
   }
 }
-// ═══════════ PIPELINE ═══════════
+
 async function createTaskOnly(item){item.status='creating';item.progress='Préparation…';renderQueue();const prompt=buildPrompt();item.prompt=prompt;const vid=await createVideoTask(item.image.dataUri,prompt);item.videoId=vid;item.startTime=Date.now();item.status='processing';item.progress='En cours…';renderQueue();return vid}
 async function pollTaskAndDisplay(item){try{const url=await pollVideo(item.videoId,p=>{item.progress=p;renderQueue()});const el=Date.now()-item.startTime;recordGenerationTime(state.durationFrames,el);item.status='done';item.videoUrl=url;item.progress='Terminé';state.completed++;renderQueue();updateGenerateBtn();addToGallery(url,'Image '+(item.imageIndex+1))}catch(e){if(e.message==='Arrêt demandé'){item.status='failed';item.progress='Arrêté'}else{item.status='failed';item.progress='Échec';state.failed++}renderQueue();updateGenerateBtn()}}
 
-// ═══════════ WORKFLOW ═══════════
 async function startGeneration(){
   if(state.isRunning||!state.images.length)return;
   if(!getApiKey()){alert('Ajoutez votre clé API');return}
@@ -512,7 +489,6 @@ async function startGeneration(){
 }
 function stopGeneration(){if(!state.isRunning)return;state.stopRequested=true;setStatus('Arrêt en cours…')}
 
-// ═══════════ INIT ═══════════
 (function init(){
   const sb=document.getElementById('api-save-btn');
   if(sb)sb.addEventListener('click',function(e){e.preventDefault();saveApiKey()});
@@ -522,35 +498,30 @@ function stopGeneration(){if(!state.isRunning)return;state.stopRequested=true;se
   const uz=document.getElementById('upload-zone'),fi=document.getElementById('file-input');
   if(uz&&fi){uz.addEventListener('click',()=>fi.click());fi.addEventListener('change',e=>{handleFiles(e.target.files);fi.value=''})}
   const mp=document.getElementById('main-prompt');if(mp)mp.addEventListener('input',e=>{state.mainPrompt=e.target.value});
-  // Durée : menu déroulant
-const ds=document.getElementById('duration-select');
-if(ds)ds.addEventListener('change',e=>{
-  state.durationFrames=parseInt(e.target.value,10);
-  const ci=document.getElementById('duration-custom');
-  if(ci)ci.value='';
-});
-// Durée : champ personnalisé
-const dc=document.getElementById('duration-custom');
-const da=document.getElementById('duration-apply');
-function applyCustomDuration(){
-  const ci=document.getElementById('duration-custom');
-  if(!ci)return;
-  let sec=parseFloat(ci.value);
-  if(isNaN(sec)||sec<1){alert('Entre une durée entre 1 et 18 secondes');return}
-  if(sec>18){sec=18;ci.value=18}
-  // Convertir en num_frames (doit être 8n+1 et ≤ 441)
-  // frames = sec * 24 fps
-  let frames=Math.round(sec*24);
-  // Ajuster au 8n+1 le plus proche
-  frames=Math.round((frames-1)/8)*8+1;
-  if(frames<9)frames=9;
-  if(frames>441)frames=441;
-  state.durationFrames=frames;
-  const realSec=(frames/24).toFixed(1);
-  showToast('Durée : '+realSec+' s ('+frames+' frames)','success',2500);
-}
-if(da)da.addEventListener('click',applyCustomDuration);
-if(dc)dc.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCustomDuration()}});
+  const ds=document.getElementById('duration-select');
+  if(ds)ds.addEventListener('change',e=>{
+    state.durationFrames=parseInt(e.target.value,10);
+    const ci=document.getElementById('duration-custom');
+    if(ci)ci.value='';
+  });
+  const dc=document.getElementById('duration-custom');
+  const da=document.getElementById('duration-apply');
+  function applyCustomDuration(){
+    const ci=document.getElementById('duration-custom');
+    if(!ci)return;
+    let sec=parseFloat(ci.value);
+    if(isNaN(sec)||sec<1){alert('Entre une durée entre 1 et 18 secondes');return}
+    if(sec>18){sec=18;ci.value=18}
+    let frames=Math.round(sec*24);
+    frames=Math.round((frames-1)/8)*8+1;
+    if(frames<9)frames=9;
+    if(frames>441)frames=441;
+    state.durationFrames=frames;
+    const realSec=(frames/24).toFixed(1);
+    showToast('Durée : '+realSec+' s ('+frames+' frames)','success',2500);
+  }
+  if(da)da.addEventListener('click',applyCustomDuration);
+  if(dc)dc.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCustomDuration()}});
   const fs=document.getElementById('framing-select');if(fs)fs.addEventListener('change',e=>{state.framing=e.target.value});
   const is=document.getElementById('intensity-select');if(is)is.addEventListener('change',e=>{state.intensity=e.target.value});
   const gb=document.getElementById('generate-btn');if(gb)gb.addEventListener('click',startGeneration);
