@@ -419,33 +419,52 @@ function renderGallery(){
 function downloadVideo(id){
   const v=state.videos.find(x=>x.id===id);
   if(!v){showToast('Vidéo introuvable','error');return}
-  showToast('Téléchargement…','success',2000);
-  const a=document.createElement('a');
-  a.href=v.url;
-  a.download='dragon_'+Date.now()+'.mp4';
-  a.target='_blank';
-  a.rel='noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  
+  // Détecter iPhone/iPad
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
+  if(isIOS){
+    // Sur iPhone : ouvrir la vidéo dans un nouvel onglet
+    // Puis l'utilisateur fait un appui long → "Enregistrer la vidéo"
+    showToast('Appui long sur la vidéo → Enregistrer', 'success', 4000);
+    window.open(v.url, '_blank');
+  } else {
+    // Sur PC : téléchargement direct
+    showToast('Téléchargement…','success',2000);
+    const a=document.createElement('a');
+    a.href=v.url;
+    a.download='dragon_'+Date.now()+'.mp4';
+    a.target='_blank';
+    a.rel='noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  }
 }
 function downloadAll(){
   if(!state.videos.length){showToast('Aucune vidéo','warn');return}
-  showToast('Ouverture de '+state.videos.length+' vidéos…','success',3000);
-  state.videos.forEach((v,i)=>{
-    setTimeout(()=>{
-      const a=document.createElement('a');
-      a.href=v.url;
-      a.download='dragon_'+i+'_'+Date.now()+'.mp4';
-      a.target='_blank';
-      a.rel='noopener';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    },i*800);
-  });
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(isIOS){
+    showToast('Ouvre chaque vidéo et fais un appui long pour enregistrer', 'success', 4000);
+    // Ouvre la première dans un nouvel onglet
+    window.open(state.videos[0].url, '_blank');
+  } else {
+    showToast('Téléchargement de '+state.videos.length+' vidéos…','success',3000);
+    state.videos.forEach((v,i)=>{
+      setTimeout(()=>{
+        const a=document.createElement('a');
+        a.href=v.url;
+        a.download='dragon_'+i+'_'+Date.now()+'.mp4';
+        a.target='_blank';
+        a.rel='noopener';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      },i*800);
+    });
+  }
 }
-
 // ═══════════ PIPELINE ═══════════
 async function createTaskOnly(item){item.status='creating';item.progress='Préparation…';renderQueue();const prompt=buildPrompt();item.prompt=prompt;const vid=await createVideoTask(item.image.dataUri,prompt);item.videoId=vid;item.startTime=Date.now();item.status='processing';item.progress='En cours…';renderQueue();return vid}
 async function pollTaskAndDisplay(item){try{const url=await pollVideo(item.videoId,p=>{item.progress=p;renderQueue()});const el=Date.now()-item.startTime;recordGenerationTime(state.durationFrames,el);item.status='done';item.videoUrl=url;item.progress='Terminé';state.completed++;renderQueue();updateGenerateBtn();addToGallery(url,'Image '+(item.imageIndex+1))}catch(e){if(e.message==='Arrêt demandé'){item.status='failed';item.progress='Arrêté'}else{item.status='failed';item.progress='Échec';state.failed++}renderQueue();updateGenerateBtn()}}
