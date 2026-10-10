@@ -236,13 +236,22 @@ let API_KEY_MEMORY='';
 function getApiKey(){try{const k=localStorage.getItem(API_KEY_STORAGE);if(k)return k.trim()}catch(e){}return API_KEY_MEMORY.trim()}
 function saveApiKey(){
   const i=document.getElementById('api-key-input');
-  if(!i)return;
+  if(!i){alert('Champ clé introuvable');return}
   const k=i.value.trim();
   if(!k){alert('Tape d\'abord ta clé API');return}
+  if(!k.startsWith('sk-')){alert('Ta clé doit commencer par sk-');return}
   API_KEY_MEMORY=k;
   try{localStorage.setItem(API_KEY_STORAGE,k)}catch(e){}
   updateApiPanel();
-  showToast('Clé API enregistrée ✓','success',3000);
+  // Message visible en haut
+  showToast('Clé API enregistrée ✓','success',4000);
+  // Et aussi un message de confirmation visuel direct
+  const st=document.getElementById('api-status-text');
+  if(st)st.textContent='Clé active · '+k.slice(0,8)+'…'+k.slice(-4);
+  const sl=document.getElementById('api-status-line');
+  if(sl)sl.classList.add('ok');
+  const p=document.getElementById('api-panel');
+  if(p)p.classList.add('ok');
 }
 function updateApiPanel(){
   const p=document.getElementById('api-panel');
