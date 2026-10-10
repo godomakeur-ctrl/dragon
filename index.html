@@ -173,7 +173,7 @@ select:focus{outline:none;border-color:var(--gold)}
 <label class="control-label">Durée (en secondes)</label>
 <select id="duration-select" style="margin-bottom:.5rem">
 <option value="121">5 secondes</option>
-<option value="153">6,4 secondes</option>
+<option value="161">6,7 secondes</option>
 <option value="241">10 secondes</option>
 <option value="361">15 secondes</option>
 <option value="441">18 secondes (maximum)</option>
@@ -223,14 +223,14 @@ select:focus{outline:none;border-color:var(--gold)}
 <div class="toast" id="toast"><span class="toast-icon" id="toast-icon">✓</span><span id="toast-text">Message</span></div>
 
 <script>
-const API_BASE='https://apihub.agnes-ai.com/v1';
+  const API_BASE='https://apihub.agnes-ai.com/v1';
 const POLL_BASE='https://apihub.agnes-ai.com/agnesapi';
 const MODEL_VIDEO='agnes-video-v2.0';
 const FRAME_RATE=24;
 let createIntervalMs=62000;
 const CREATE_INTERVAL_MIN=62000,CREATE_INTERVAL_MAX=90000,CREATE_INTERVAL_SAFE=75000;
 const POLL_INTERVAL_SEC=8,MAX_POLL_ATTEMPTS=100;
-const API_KEY_STORAGE='dragon_api_key_v2';
+const API_KEY_STORAGE='dragon_api_key_v3';
 
 let API_KEY_MEMORY='';
 function getApiKey(){try{const k=localStorage.getItem(API_KEY_STORAGE);if(k)return k.trim()}catch(e){}return API_KEY_MEMORY.trim()}
@@ -351,7 +351,7 @@ medium:'medium shot, subject framed from waist up',
 wide:'wide shot, subject framed with the environment visible'
 };
 
-const state={images:[],isRunning:false,stopRequested:false,queue:[],completed:0,failed:0,selectedEffect:null,mainPrompt:'',framing:'random',intensity:'moderate',durationFrames:153,isLoadingImages:false,videos:[]};
+const state={images:[],isRunning:false,stopRequested:false,queue:[],completed:0,failed:0,selectedEffect:null,mainPrompt:'',framing:'random',intensity:'moderate',durationFrames:161,isLoadingImages:false,videos:[]};
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 function log(m){console.log('[Dragon] '+m)}
@@ -514,7 +514,7 @@ function stopGeneration(){if(!state.isRunning)return;state.stopRequested=true;se
     if(sec>18){sec=18;ci.value=18}
     let frames=Math.round(sec*24);
     frames=Math.round((frames-1)/8)*8+1;
-    if(frames<9)frames=9;
+    if(frames<81)frames=81;
     if(frames>441)frames=441;
     state.durationFrames=frames;
     const realSec=(frames/24).toFixed(1);
@@ -527,6 +527,3 @@ function stopGeneration(){if(!state.isRunning)return;state.stopRequested=true;se
   const gb=document.getElementById('generate-btn');if(gb)gb.addEventListener('click',startGeneration);
   updateApiPanel();updateTimingDisplay();renderPromptPresets();renderStyles();renderImages();renderQueue();
 })();
-</script>
-</body>
-</html>
